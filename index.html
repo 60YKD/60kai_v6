@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>60会精算アプリ v6</title>
+
+<link rel="manifest" href="manifest.webmanifest">
+
+<meta name="theme-color" content="#1976d2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="60会">
+
+<style>
+
+body{
+    font-family:sans-serif;
+    max-width:1100px;
+    margin:auto;
+    padding:16px;
+}
+
+h1{
+    text-align:center;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-bottom:12px;
+}
+
+th,td{
+    border:1px solid #ccc;
+    padding:6px;
+    text-align:center;
+}
+
+input{
+    width:95%;
+    box-sizing:border-box;
+}
+
+button{
+    padding:8px 12px;
+    margin:4px;
+}
+
+textarea{
+    width:100%;
+    height:220px;
+}
+
+.actions{
+    margin-top:10px;
+    margin-bottom:10px;
+}
+
+.resultTable{
+    margin-top:12px;
+}
+
+@media(max-width:700px){
+
+    table{
+        font-size:12px;
+    }
+
+    button{
+        width:100%;
+        margin-top:6px;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>60会精算アプリ v6</h1>
+
+<p>
+宿泊費総額
+<input id="lodging" type="number" value="0">
+</p>
+
+<p>
+丸め単位
+<input id="unit" type="number" value="100">
+</p>
+
+<table id="tbl">
+
+<thead>
+<tr>
+<th>幹事</th>
+<th>氏名</th>
+<th>酒代立替</th>
+<th>酒代上限</th>
+<th>つまみ代立替</th>
+<th>削除</th>
+</tr>
+</thead>
+
+<tbody>
+</tbody>
+
+</table>
+
+<div class="actions">
+
+<button onclick="addRow()">
+参加者追加
+</button>
+
+<button onclick="calc()">
+精算する
+</button>
+
+<button onclick="copyLine()">
+LINEコピー
+</button>
+
+<button onclick="csvOut()">
+CSV出力
+</button>
+
+<button onclick="clearData()">
+データクリア
+</button>
+
+</div>
+
+<div id="result"></div>
+
+<script>
+
+const STORAGE_KEY = "60kai_v6";
+
+function addRow(
+    name="",
+    alcohol=0,
+    limit=2500,
+    snack=0,
+    kanji=false
+){
+
+    const tr=document.createElement("tr");
+
+    tr.innerHTML=`
+
+    <td>
+      <input
+        type="radio"
+        name="kanji"
+        ${kanji?"checked":""}
+      >
+    </td>
+
+    <td>
+      <input value="${name}">
+    </td>
+
+    <td>
+      <input type="number" value="${alcohol}">
+    </td>
+
+    <td>
+      <input type="number" value="${limit}">
+    </td>
+
+    <td>
+      <input type="number" value="${snack}">
+    </td>
+
+    <td>
+      <button onclick="removeRow(this)">
+      削除
+      </button>
+    </td>
+
+    `;
+
+    tr.querySelectorAll("input").forEach(
+        i=>i.addEventListener("input",save)
+    );
+
+    document
+      .querySelector("#tbl tbody")
+      .appendChild(tr);
+
+    save();
+}
+
+function removeRow(btn){
+
+    btn.closest("tr").remove();
+
+    save();
+}
+
+function save(){
+
+    const rows=[
+
+        ...document.querySelectorAll(
+            "#tbl tbody tr"
+        )
+
+    ].map(r=>({
+
+        kanji:
+            r.cells[0]
+             .querySelector("input")
+             .checked,
+
+        name:
+            r.cells[1]
+             .querySelector("input")
+             .value,
+
+        alcohol:
+            r.cells[2]
+             .querySelector("input")
+             .value,
+
+        limit:
+            r.cells[3]
+             .querySelector("input")
+             .value,
+
+        snack:
+            r.cells[4]
+             .querySelector("input")
+             .value
+
+    }));
+
+    localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+
+            lodging:
+                lodging.value,
+
+            unit:
+                unit.value,
+
+            rows
+
+        })
+    );
+}
+
+function load(){
+
+    const d=JSON.parse(
+        localStorage.getItem(
+            STORAGE_KEY
+        ) || "null"
+    );
+
+    if(!d){
+
+        addRow(
+            "幹事",
+            0,
+            2500,
+            0,
+            true
+        );
+
+        addRow(
+            "参加者",
+            0,
+            2500,
+            0,
+            false
+        );
+
+        return;
+    }
+
+    lodging.value=d.lodging || 0;
+
+    unit.value=d.unit || 100;
+
+    d.rows.forEach(r=>{
+
+        addRow(
+            r.name,
+            r.alcohol,
+            r.limit,
+            r.snack,
+            r.kanji
+        );
+
+    });
+}
+
+function ceilPay(v,u){
+
+    return Math.ceil(v/u)*u;
+}
+
+function roundRecv(v,u){
+
+    return Math.round(v/u)*u;
+}
+function calc(){
+
+    const unitValue =
+        Math.max(
+            1,
+            Number(unit.value) || 100
+        );
+
+    const lodgingTotal =
+        Number(lodging.value) || 0;
+
+    const members = [
+
+        ...document.querySelectorAll(
+            "#tbl tbody tr"
+        )
+
+    ].map(r=>({
+
+        kanji:
+            r.cells[0]
+             .querySelector("input")
+             .checked,
+
+        name:
+            r.cells[1]
+             .querySelector("input")
+             .value || "参加者",
+
+        alcohol:
+            Number(
+                r.cells[2]
+                 .querySelector("input")
+                 .value
+            ) || 0,
+
+        limit:
+            Number(
+                r.cells[3]
+                 .querySelector("input")
+                 .value
+            ) || 0,
+
+        snack:
+            Number(
+                r.cells[4]
+                 .querySelector("input")
+                 .value
+            ) || 0
+
+    }));
+
+
+    if(members.length===0){
+
+        alert("参加者がいません");
+
+        return;
+    }
+
+
+    const peopleCount =
+        members.length;
+
+
+    const alcoholPool =
+        members.reduce(
+            (sum,m)=>
+                sum +
+                Math.min(
+                    m.alcohol,
+                    m.limit
+                ),
+            0
+        );
+
+
+    const alcoholSelfPay =
+        members.reduce(
+            (sum,m)=>
+                sum +
+                Math.max(
+                    0,
+                    m.alcohol - m.limit
+                ),
+            0
+        );
+
+
+    const snackPool =
+        members.reduce(
+            (sum,m)=>
+                sum + m.snack,
+            0
+        );
+
+
+    const burdenPerPerson =
+
+        lodgingTotal / peopleCount +
+
+        alcoholPool / peopleCount +
+
+        snackPool / peopleCount;
+
+
+    let results =
+
+        members.map(m=>{
+
+            const credit =
+
+                Math.min(
+                    m.alcohol,
+                    m.limit
+                )
+
+                +
+
+                m.snack;
+
+
+            let net =
+
+                burdenPerPerson
+                -
+                credit;
+
+
+            if(net >= 0){
+
+                net =
+                    ceilPay(
+                        net,
+                        unitValue
+                    );
+
+            }else{
+
+                net =
+                    -roundRecv(
+                        Math.abs(net),
+                        unitValue
+                    );
+
+            }
+
+            return {
+
+                ...m,
+
+                net
+
+            };
+
+        });
+
+
+    const totalPay =
+
+        results
+            .filter(r=>r.net>0)
+            .reduce(
+                (s,r)=>s+r.net,
+                0
+            );
+
+
+    const totalRecv =
+
+        results
+            .filter(r=>r.net<0)
+            .reduce(
+                (s,r)=>
+                    s + Math.abs(r.net),
+                0
+            );
+
+
+    const collected =
+
+        totalPay
+        -
+        totalRecv;
+
+
+    const excess =
+
+        collected
+        -
+        lodgingTotal;
+
+
+    const kanjiIndex =
+
+        results.findIndex(
+            r=>r.kanji
+        );
+
+
+    if(
+        kanjiIndex >= 0
+        &&
+        excess > 0
+    ){
+
+        results[
+            kanjiIndex
+        ].net -= excess;
+    }
+
+
+    let lineText =
+
+        "【60会精算 v6】\n\n";
+
+
+    let html =
+
+        "<h2>精算結果</h2>" +
+
+        "<table class='resultTable'>" +
+
+        "<tr>" +
+        "<th>氏名</th>" +
+        "<th>結果</th>" +
+        "</tr>";
+
+
+    results.forEach(r=>{
+
+        const resultText =
+
+            r.net >= 0
+
+            ?
+
+            r.net.toLocaleString()
+            +
+            "円支払い"
+
+            :
+
+            Math.abs(
+                r.net
+            ).toLocaleString()
+            +
+            "円受取";
+
+
+        html +=
+
+            "<tr>" +
+
+            "<td>" +
+
+            r.name +
+
+            (r.kanji
+                ? "(幹事)"
+                : "") +
+
+            "</td>" +
+
+            "<td>" +
+
+            resultText +
+
+            "</td>" +
+
+            "</tr>";
+
+
+        lineText +=
+
+            r.name +
+
+            (r.kanji
+                ? "(幹事)"
+                : "") +
+
+            "\n" +
+
+            resultText +
+
+            "\n\n";
+
+    });
+
+
+    html += "</table>";
+
+
+    html +=
+
+        "<p>" +
+
+        "精算対象酒代合計 : " +
+
+        alcoholPool.toLocaleString() +
+
+        "円" +
+
+        "</p>";
+
+
+    html +=
+
+        "<p>" +
+
+        "酒代自己負担額合計 : " +
+
+        alcoholSelfPay.toLocaleString() +
+
+        "円" +
+
+        "</p>";
+
+
+    html +=
+
+        "<textarea id='lineText'>" +
+
+        lineText +
+
+        "</textarea>";
+
+
+    document
+        .getElementById(
+            "result"
+        )
+        .innerHTML = html;
+
+
+    window.lineResult =
+        lineText;
+
+
+    save();
+}
+
+
+
+function copyLine(){
+
+    const txt =
+
+        window.lineResult || "";
+
+
+    navigator.clipboard
+        .writeText(txt)
+        .then(()=>{
+
+            alert(
+                "LINE用テキストをコピーしました"
+            );
+
+        });
+}
+
+
+
+function csvOut(){
+
+    const table =
+
+        document.querySelector(
+            ".resultTable"
+        );
+
+
+    if(!table){
+
+        alert(
+            "先に精算してください"
+        );
+
+        return;
+    }
+
+
+    const rows = [];
+
+
+    rows.push([
+        "氏名",
+        "結果"
+    ]);
+
+
+    [...table.rows]
+      .slice(1)
+      .forEach(r=>{
+
+        rows.push([
+
+            r.cells[0]
+             .textContent,
+
+            r.cells[1]
+             .textContent
+
+        ]);
+
+    });
+
+
+    const csv =
+
+        rows
+            .map(
+                r=>r.join(",")
+            )
+            .join("\n");
+
+
+    const blob =
+
+        new Blob(
+            [csv],
+            {
+                type:
+                "text/csv"
+            }
+        );
+
+
+    const a =
+        document.createElement(
+            "a"
+        );
+
+
+    a.href =
+        URL.createObjectURL(
+            blob
+        );
+
+
+    a.download =
+        "60kai_v6.csv";
+
+
+    a.click();
+}
+
+
+
+function clearData(){
+
+    if(
+
+        !confirm(
+            "保存データを削除しますか？"
+        )
+
+    ){
+
+        return;
+    }
+
+    localStorage.removeItem(
+        STORAGE_KEY
+    );
+
+    location.reload();
+}
+
+
+
+lodging.addEventListener(
+    "input",
+    save
+);
+
+unit.addEventListener(
+    "input",
+    save
+);
+
+
+
+if(
+    "serviceWorker"
+    in navigator
+){
+
+    navigator
+        .serviceWorker
+        .register(
+            "./service-worker.js"
+        );
+}
+
+
+
+load();
+
+</script>
+
+</body>
+</html>
