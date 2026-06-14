@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<meta name="viewport"
+      content="width=device-width,initial-scale=1">
 
 <title>60会精算アプリ v6</title>
 
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest"
+      href="manifest.webmanifest">
 
-<meta name="theme-color" content="#1976d2">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="60会">
+<meta name="theme-color"
+      content="#1976d2">
 
 <style>
 
@@ -29,7 +32,6 @@ h1{
 table{
     width:100%;
     border-collapse:collapse;
-    margin-bottom:12px;
 }
 
 th,td{
@@ -53,15 +55,6 @@ textarea{
     height:220px;
 }
 
-.actions{
-    margin-top:10px;
-    margin-bottom:10px;
-}
-
-.resultTable{
-    margin-top:12px;
-}
-
 @media(max-width:700px){
 
     table{
@@ -72,7 +65,6 @@ textarea{
         width:100%;
         margin-top:6px;
     }
-
 }
 
 </style>
@@ -84,113 +76,170 @@ textarea{
 <h1>60会精算アプリ v6</h1>
 
 <p>
+
 宿泊費総額
-<input id="lodging" type="number" value="0">
+
+<input id="lodging"
+       type="number"
+       value="0">
+
 </p>
 
 <p>
+
+酒代上限額
+
+<input id="limit"
+       type="number"
+       value="2500">
+
+</p>
+
+<p>
+
 丸め単位
-<input id="unit" type="number" value="100">
+
+<input id="unit"
+       type="number"
+       value="100">
+
 </p>
 
 <table id="tbl">
 
 <thead>
+
 <tr>
+
 <th>幹事</th>
+
 <th>氏名</th>
+
 <th>酒代立替</th>
-<th>酒代上限</th>
+
 <th>つまみ代立替</th>
+
 <th>削除</th>
+
 </tr>
+
 </thead>
 
 <tbody>
+
 </tbody>
 
 </table>
 
-<div class="actions">
-
 <button onclick="addRow()">
+
 参加者追加
+
 </button>
 
 <button onclick="calc()">
+
 精算する
+
 </button>
 
 <button onclick="copyLine()">
+
 LINEコピー
+
 </button>
 
 <button onclick="csvOut()">
+
 CSV出力
+
 </button>
 
 <button onclick="clearData()">
-データクリア
-</button>
 
-</div>
+データクリア
+
+</button>
 
 <div id="result"></div>
 
 <script>
 
-const STORAGE_KEY = "60kai_v6";
+const STORAGE_KEY="60kai_v6";
 
 function addRow(
     name="",
     alcohol=0,
-    limit=2500,
     snack=0,
     kanji=false
 ){
 
-    const tr=document.createElement("tr");
+    const tr=
+        document.createElement("tr");
 
     tr.innerHTML=`
 
     <td>
+
       <input
         type="radio"
         name="kanji"
         ${kanji?"checked":""}
       >
+
     </td>
 
     <td>
-      <input value="${name}">
+
+      <input
+        value="${name}"
+      >
+
     </td>
 
     <td>
-      <input type="number" value="${alcohol}">
+
+      <input
+        type="number"
+        value="${alcohol}"
+      >
+
     </td>
 
     <td>
-      <input type="number" value="${limit}">
+
+      <input
+        type="number"
+        value="${snack}"
+      >
+
     </td>
 
     <td>
-      <input type="number" value="${snack}">
-    </td>
 
-    <td>
-      <button onclick="removeRow(this)">
+      <button
+        onclick="removeRow(this)"
+      >
+
       削除
-      </button>
-    </td>
 
+      </button>
+
+    </td>
     `;
 
-    tr.querySelectorAll("input").forEach(
-        i=>i.addEventListener("input",save)
-    );
+    tr.querySelectorAll("input")
+      .forEach(i=>
+        i.addEventListener(
+            "input",
+            save
+        )
+      );
 
     document
-      .querySelector("#tbl tbody")
+      .querySelector(
+          "#tbl tbody"
+      )
       .appendChild(tr);
 
     save();
@@ -228,24 +277,24 @@ function save(){
              .querySelector("input")
              .value,
 
-        limit:
-            r.cells[3]
-             .querySelector("input")
-             .value,
-
         snack:
-            r.cells[4]
+            r.cells[3]
              .querySelector("input")
              .value
 
     }));
 
     localStorage.setItem(
+
         STORAGE_KEY,
+
         JSON.stringify({
 
             lodging:
                 lodging.value,
+
+            limit:
+                limit.value,
 
             unit:
                 unit.value,
@@ -253,23 +302,31 @@ function save(){
             rows
 
         })
+
     );
 }
 
 function load(){
 
-    const d=JSON.parse(
-        localStorage.getItem(
-            STORAGE_KEY
-        ) || "null"
-    );
+    const d=
+
+        JSON.parse(
+
+            localStorage.getItem(
+                STORAGE_KEY
+            )
+
+            ||
+
+            "null"
+
+        );
 
     if(!d){
 
         addRow(
             "幹事",
             0,
-            2500,
             0,
             true
         );
@@ -277,7 +334,6 @@ function load(){
         addRow(
             "参加者",
             0,
-            2500,
             0,
             false
         );
@@ -285,21 +341,31 @@ function load(){
         return;
     }
 
-    lodging.value=d.lodging || 0;
+    lodging.value=
+        d.lodging || 0;
 
-    unit.value=d.unit || 100;
+    limit.value=
+        d.limit || 2500;
+
+    unit.value=
+        d.unit || 100;
 
     d.rows.forEach(r=>{
 
         addRow(
+
             r.name,
+
             r.alcohol,
-            r.limit,
+
             r.snack,
+
             r.kanji
+
         );
 
     });
+
 }
 
 function ceilPay(v,u){
@@ -313,7 +379,10 @@ function roundRecv(v,u){
 }
 function calc(){
 
-    const unitValue =
+    const cap =
+        Number(limit.value) || 2500;
+
+    const roundUnit =
         Math.max(
             1,
             Number(unit.value) || 100
@@ -347,16 +416,9 @@ function calc(){
                  .value
             ) || 0,
 
-        limit:
-            Number(
-                r.cells[3]
-                 .querySelector("input")
-                 .value
-            ) || 0,
-
         snack:
             Number(
-                r.cells[4]
+                r.cells[3]
                  .querySelector("input")
                  .value
             ) || 0
@@ -372,29 +434,29 @@ function calc(){
     }
 
 
-    const peopleCount =
+    const count =
         members.length;
 
 
     const alcoholPool =
         members.reduce(
-            (sum,m)=>
-                sum +
+            (s,m)=>
+                s +
                 Math.min(
                     m.alcohol,
-                    m.limit
+                    cap
                 ),
             0
         );
 
 
-    const alcoholSelfPay =
+    const selfAlcohol =
         members.reduce(
-            (sum,m)=>
-                sum +
+            (s,m)=>
+                s +
                 Math.max(
                     0,
-                    m.alcohol - m.limit
+                    m.alcohol-cap
                 ),
             0
         );
@@ -402,22 +464,22 @@ function calc(){
 
     const snackPool =
         members.reduce(
-            (sum,m)=>
-                sum + m.snack,
+            (s,m)=>
+                s+m.snack,
             0
         );
 
 
-    const burdenPerPerson =
+    const burden =
 
-        lodgingTotal / peopleCount +
+        lodgingTotal/count +
 
-        alcoholPool / peopleCount +
+        alcoholPool/count +
 
-        snackPool / peopleCount;
+        snackPool/count;
 
 
-    let results =
+    let result =
 
         members.map(m=>{
 
@@ -425,7 +487,7 @@ function calc(){
 
                 Math.min(
                     m.alcohol,
-                    m.limit
+                    cap
                 )
 
                 +
@@ -434,26 +496,24 @@ function calc(){
 
 
             let net =
-
-                burdenPerPerson
-                -
-                credit;
+                burden-credit;
 
 
-            if(net >= 0){
+            if(net>=0){
 
                 net =
                     ceilPay(
                         net,
-                        unitValue
+                        roundUnit
                     );
 
-            }else{
+            }
+            else{
 
                 net =
                     -roundRecv(
                         Math.abs(net),
-                        unitValue
+                        roundUnit
                     );
 
             }
@@ -471,7 +531,7 @@ function calc(){
 
     const totalPay =
 
-        results
+        result
             .filter(r=>r.net>0)
             .reduce(
                 (s,r)=>s+r.net,
@@ -481,49 +541,46 @@ function calc(){
 
     const totalRecv =
 
-        results
+        result
             .filter(r=>r.net<0)
             .reduce(
                 (s,r)=>
-                    s + Math.abs(r.net),
+                    s+
+                    Math.abs(r.net),
                 0
             );
 
 
     const collected =
 
-        totalPay
-        -
-        totalRecv;
+        totalPay-totalRecv;
 
 
     const excess =
 
-        collected
-        -
+        collected -
         lodgingTotal;
 
 
     const kanjiIndex =
 
-        results.findIndex(
+        result.findIndex(
             r=>r.kanji
         );
 
 
     if(
-        kanjiIndex >= 0
-        &&
-        excess > 0
+        kanjiIndex>=0 &&
+        excess>0
     ){
 
-        results[
+        result[
             kanjiIndex
         ].net -= excess;
     }
 
 
-    let lineText =
+    let line =
 
         "【60会精算 v6】\n\n";
 
@@ -535,16 +592,19 @@ function calc(){
         "<table class='resultTable'>" +
 
         "<tr>" +
+
         "<th>氏名</th>" +
+
         "<th>結果</th>" +
+
         "</tr>";
 
 
-    results.forEach(r=>{
+    result.forEach(r=>{
 
-        const resultText =
+        const txt =
 
-            r.net >= 0
+            r.net>=0
 
             ?
 
@@ -577,14 +637,14 @@ function calc(){
 
             "<td>" +
 
-            resultText +
+            txt +
 
             "</td>" +
 
             "</tr>";
 
 
-        lineText +=
+        line +=
 
             r.name +
 
@@ -594,47 +654,75 @@ function calc(){
 
             "\n" +
 
-            resultText +
+            txt +
 
             "\n\n";
 
     });
 
 
-    html += "</table>";
+    html +=
+
+        "</table>";
 
 
     html +=
 
-        "<p>" +
+        "<p>宿泊費総額 : " +
 
-        "精算対象酒代合計 : " +
+        lodgingTotal
+            .toLocaleString()
 
-        alcoholPool.toLocaleString() +
+        +
 
-        "円" +
-
-        "</p>";
-
-
-    html +=
-
-        "<p>" +
-
-        "酒代自己負担額合計 : " +
-
-        alcoholSelfPay.toLocaleString() +
-
-        "円" +
-
-        "</p>";
+        "円</p>";
 
 
     html +=
 
-        "<textarea id='lineText'>" +
+        "<p>酒代精算対象額 : " +
 
-        lineText +
+        alcoholPool
+            .toLocaleString()
+
+        +
+
+        "円</p>";
+
+
+    html +=
+
+        "<p>酒代自己負担額 : " +
+
+        selfAlcohol
+            .toLocaleString()
+
+        +
+
+        "円</p>";
+
+
+    html +=
+
+        "<p>つまみ代総額 : " +
+
+        snackPool
+            .toLocaleString()
+
+        +
+
+        "円</p>";
+
+
+    html +=
+
+        "<textarea id='lineText'>"
+
+        +
+
+        line
+
+        +
 
         "</textarea>";
 
@@ -647,7 +735,7 @@ function calc(){
 
 
     window.lineResult =
-        lineText;
+        line;
 
 
     save();
@@ -671,6 +759,7 @@ function copyLine(){
             );
 
         });
+
 }
 
 
@@ -694,7 +783,7 @@ function csvOut(){
     }
 
 
-    const rows = [];
+    const rows=[];
 
 
     rows.push([
@@ -704,20 +793,20 @@ function csvOut(){
 
 
     [...table.rows]
-      .slice(1)
-      .forEach(r=>{
+        .slice(1)
+        .forEach(r=>{
 
-        rows.push([
+            rows.push([
 
-            r.cells[0]
-             .textContent,
+                r.cells[0]
+                 .textContent,
 
-            r.cells[1]
-             .textContent
+                r.cells[1]
+                 .textContent
 
-        ]);
+            ]);
 
-    });
+        });
 
 
     const csv =
@@ -757,6 +846,7 @@ function csvOut(){
 
 
     a.click();
+
 }
 
 
@@ -764,13 +854,10 @@ function csvOut(){
 function clearData(){
 
     if(
-
         !confirm(
             "保存データを削除しますか？"
         )
-
     ){
-
         return;
     }
 
@@ -784,6 +871,11 @@ function clearData(){
 
 
 lodging.addEventListener(
+    "input",
+    save
+);
+
+limit.addEventListener(
     "input",
     save
 );
@@ -805,6 +897,7 @@ if(
         .register(
             "./service-worker.js"
         );
+
 }
 
 
