@@ -1,24 +1,26 @@
 {
-"name": "60会精算アプリ v6",
-"short_name": "60会",
-"description": "60会宿泊費・酒代・つまみ代精算アプリ",
-"start_url": "./index.html",
-"scope": "./",
-"display": "standalone",
-"orientation": "portrait",
-"lang": "ja",
-"background_color": "#ffffff",
-"theme_color": "#1976d2",
-"icons": [
-{
-"src": "icon-192.png",
-"sizes": "192x192",
-"type": "image/png"
-},
-{
-"src": "icon-512.png",
-"sizes": "512x512",
-"type": "image/png"
-}
-]
+  "name": "60会精算アプリ v6",
+  "short_name": "60会",
+  "description": "60会宿泊費・酒代・つまみ代精算アプリ",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "ja",
+  "background_color": "#ffffff",
+  "theme_color": "#1976d2",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
 }
